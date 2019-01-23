@@ -1,0 +1,175 @@
+\documentclass[conference, ]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{./graphics}
+\usepackage{textcomp}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+        T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+    
+\usepackage{multirow}
+\usepackage{blindtext}
+\usepackage{hyperref}
+\usepackage{cite}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\D}{\mathbb{D}}
+\newcommand{\C}{\mathbb{C}}
+\renewcommand{\P}{\mathbb{P}}
+\renewcommand{\L}{\mathscr{L}}
+\renewcommand{\epsilon}{\varepsilon}
+\renewcommand{\phi}{\varphi}
+\newcommand{\e}{\mathbb{e}}
+\renewcommand{\l}{\lambda}
+\newcommand{\E}{\mathbb{E}}
+\usepackage{color}
+
+\renewcommand{\ge}{\geqslant}
+\renewcommand{\le}{\leqslant}
+
+%\usepackage{biblatex}
+
+
+\begin{document}
+    
+    \title{Word embeddings: word2vec}
+    
+    \author{\IEEEauthorblockN{Daniil Gaidamashko}
+    \IEEEmembership{National Researh University "Higher School of Economics"}}
+    
+    \maketitle
+    
+    \begin{abstract}In this paper we attempt to describe the details of a word embedding toolkit named word2vec, developed  by T. Mikolov and al. at Google Inc. In the introduction a brief overview of word embedding research field is given. In the main part the key features of word2vec are described.
+    \end{abstract}
+    
+    \section*{Introduction}
+    \textit{Word embedding} is a natural language modeling technique, which involves mapping words and phrases from a large corpus of text to corresponding vectors of real numbers. Such transformation is necessary for further application of different machine learning algorithms, including neural networks, which are relied on mostly now. As the major purpose is discovering associations between words that emanate from the same or similar context, the corresponding vectors for such pairs are located in close proximity to one another in the space.
+    
+    \text{Word2vec} is a word embedding toolkit, created by Thomas Mikolov and al. at Google Inc. which exceeds the previous approaches, such as \textit{latent semantic analysis (LSA)}, invented in the late 1980s. The latter is based on the construction of a term-text "occurrence" matrix (rows represent unique words and columns correspond to texts; the cells contain the number of repetions on the term in the text). Then the reduction of its dimension via SVD follows, while preserving the similarity structure among columns. Then words are compared by taking cosine of angle between the two vectors formed by two rows. The closer to one the value appears, the more similar the words turn out to be. 
+    
+    As for word2vec, it is based on neural networks, which perform significantly better than LSA for preserving linear regularities among words, according to Mikilov and al\cite{mikolov1}. It has become possible to compute high dimensional vectors on much bigger datasets more accurately. Furthermore, applications of neural network based vectors in many NLP tasks like sentiment analysis and paraphrase detection are considered to benefit from these methods\cite{mikolov1}.
+    
+    An analysis of this solution is based on publications \cite{xin} and \cite{goldlevy}, which provide a detailed explanation of word2vec outstanding models and their update equations, as well as advanced optimization techniques.  
+    
+    \section*{Main Part}
+    The word2vec toolkit includes two different learning models as approach to learn the word embedding. These are:
+    \begin{itemize}
+    	\item Continuous Bag-of-Word model (CBOW);
+    	\item Continuous Skip-gram model (SG);
+    \end{itemize}
+
+	We shall study them separately.
+    \subsection*{Continuous Bag-of-Word Model} 
+    \textbf{The CBOW model learns the embedding by predicting the current word based on its context.}
+    The implementation of the model is 2-layer neural network \ref{fig1}.
+    
+    % \begin{figure}[htbp]
+    % 	\includegraphics[scale=0.5]{/graphics/2.png}
+    % 	\caption{A CBOW architecture.}
+    % 	\label{fig1}
+    % \end{figure}
+     
+    The input layer consists of the one-hot encoded input context words $x_1, \dots, x_C$ for a word window of size $C$ and vocabulary of size $V$. The hidden layer is $N$-dimensional vector $\mathrm{h}$. Finally, the output layer is also one-hot encoded. On the position
+    $i$ in the input vector stands 1 if $i$-th word in the vocabulary is present in the current context and 0 otherwise. As for the output vector, 1
+    stands if i-th word is predicted and 0 otherwise.
+    The input layer vectors are connected to hidden layer vector via weight $V\times N$ matrix $\mathrm{W}$; hidden layer is connected to the output layer via $N\times V$ matrix $\mathrm{W}'$. The rows $\mathrm{v}_j^T$ of $\mathrm{W}$ and columns $\mathrm{v}'_j$ of $\mathrm{W}'$ are corresponding representations of word $w_j$ from vocabulary.
+    
+    The general purpose is minimizing the loss function $E$, such that:
+    \[
+    E=-\frac{1}{C}\sum_{i}p(w_i|w_1,\ldots w_{i-1}, w_{i+1},\ldots, w_C)
+    \]
+    
+	Then \textit{softmax}, a log-linear model, is used for 
+	estimating the probability:
+	\[
+	p(w_i|w_1,\ldots w_{i-1}, w_{i+1},\ldots, w_C) = 
+	\frac{\exp s^T_i\cdot v_i}{\sum_j\exp s^T_j\cdot v_j}
+	\]where
+	\[
+	s_i = \frac{1}{C}\sum_{j=1, j\neq i}^{C}v'_j.
+	\]
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	\subsection*{The Skip-gram model}
+	\textbf{The continuous skip-gram model learns by predicting the surrounding words given a current word}.
+	The training objective of the Skip-gram model is to find word representations that are useful for
+	predicting the surrounding words in a sentence or a document. More formally, given a sequence of
+	training words $w_1$ , $w_2$ , $w_3$, $\dots$ , $w_T$ , the objective of the Skip-gram model is to maximize the average
+	log probability
+	\[
+	\frac{1}{T}\sum_{t=1}^{T}\sum_{-c\le j\le c, j\neq 0} \log p(w_{t+j}|w_t)
+	\]
+	where $c$ is the size of the training context (which can be a function of the center word $w_t$). Larger
+	$c$ results in more training examples and thus can lead to a higher accuracy, at the expense of the training time.
+	
+	The basic Skip-gram formulation defines $p(w_{t+j}|w_t)$ using the softmax function:
+	\[
+	p(w_{t+j}|w_t)=\frac{\exp(v_{w_O}'^T v_{w_I})}{\sum_{w=1}^{V}exp(\exp(v_{w}'^T)}
+	\]
+
+	where $v_w$ and $v_w'$
+	are the "input" and "output" vector representations of $w$, and $V$ is the number of words in the vocabulary.
+	
+	 \cite{mikolov1}
+	 
+	\subsection*{Optimising Computational Efficiency}
+	It is clear, that both described approaches require a lot of computations in order to get words' net input, probability prediction and prediction error. The solution is limiting the number of output vectors per training instance. These are \textit{hierarchical softmax} and \textit{negative sampling} methods.
+	
+	\subsubsection*{Hierarchical Softmax}
+	A computationally efficient approximation of the full softmax is the hierarchical softmax. It uses a binary tree representation of the output layer with the $W$ words as
+	its leaves and, for each node, explicitly represents the relative probabilities of its child nodes. So a random walk is defined. It assigns probabilities to words.
+	% \begin{figure}[htbp]
+	% 	\includegraphics[scale=0.5]{./graphics/4.png}
+	% 	\caption{A binary tree for hierarchical softmax}
+	% \end{figure}
+	Each word w can be reached by path from the root. Firstly, let
+	$n(w, j)$ be the $j$-th node on the path from the root to w, and let $L(w)$ be the length of this path, so
+	$n(w, 1) = root$ and $n(w, L(w)) = w$. Secondly, for any inner node $n$, let $ch(n)$ be an arbitrary
+	fixed child of $n$ and let $[[x]]$ be 1 if $x$ is true and -1 otherwise. Then the hierarchical softmax defines
+	$p(w_O |w_I )$:
+	\[
+	p(w_O |w_I )=\prod_{j=1}^{L(w)-1}\sigma
+	\left(
+	[[n(w, j+1)=ch(n(w, j))]]\cdot v_{n(w, j)}'^T
+	v_{w_I}'
+	\right)
+	\]
+	where $\sigma(x)=1/(1+\exp(-x))$. This means that the cost of computing $\log p(w_O |w_I )$ and $\nabla \log p(w_O |w_I )$ is proportional to $L(w)$ and does not surpass $\log W$. Also, while the original softmax assigns $v_w$ and $v_w'$ to each word $w$, in current situation a representation $v_w$ is required for word $w$ and a representation $v_w'$ is required for every inner node of the binary tree.\cite{mikolov2}
+	
+	\subsubsection*{Negative Sampling}
+	Negtive sampling is defines by the objective:
+	\[
+	\log\sigma(v_{w_O}'^T v_{w_I}')+
+	\sum_{i=1}^{k}\E_{w_i\sim P_n(w)}\left[
+	\log\sigma(-v_{w_i}'^T v_{w_I})
+	\right]
+	\]
+	which is used to replace every $\log P(w_O, w_I)$. All we need is distinguishing the target word $w_O$ from draws from the noise distribution $P_n(w)$ using logistic regression with $k$ negative samples for each data sample. T. Mikolov and al. indicated acceptable  values
+	of $k$ in the range 5-20 for small training datasets, and 2-5 for large ones.\cite{mikolov2}
+	
+	\section*{Conclusion}
+	To sum up, the work of T. Mikotov and al. is an essential breakthrough in word embedding field. It allows many researchers to practice with word2vec a lot in their projects. However, the understanding of parameter learning process still remains complex for understandig and challenging for the further development in the sphere.
+	
+	\begin{thebibliography}{10}
+		\bibitem{mikolov1} Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean, \emph{"Learning while searching in constraint-satisfaction problems"}, \textit{CoRR}, vol. abs/1301.3781, 2013. [Online]. Available: \url{http://arxiv.org/abs/1301.3781}
+		
+		\bibitem{xin} Xin Rong, \emph{"word2vec Parameter Learning Explained"}, \textit{CoRR}, vol. abs/1411.2738, 2014. [Online]. Available: \url{http://arxiv.org/abs/1411.2738}
+		
+		\bibitem{mikolov2} Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, Jeffrey Dean, \emph{"Distributed Representations of Words and Phrases and their Compositionality"}, \textit{CoRR}, vol. abs/1310.4546, 2013. [Online]. Available: \url{http://arxiv.org/abs/1310.4546}
+		
+		\bibitem{goldlevy} Yoav Goldberg, Omer Levy, \emph{"word2vec Explained: deriving Mikolov et al.'s negative-sampling word-embedding method"}, \textit{CoRR}, vol. abs/1402.3722, 2014. [Online]. Available: \url{http://arxiv.org/abs/1402.3722}
+	\end{thebibliography}
+
+\end{document}
